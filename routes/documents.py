@@ -83,6 +83,26 @@ def edit_document(doc_id):
     return render_template("editor.html", document=doc, is_owner=is_owner, shares=shares)
 
 
+@docs_bp.route("/api/documents/<int:doc_id>", methods=["PATCH"])
+@login_required
+def update_document(doc_id):
+    doc = Document.query.get_or_404(doc_id)
+    if not _can_edit(doc, current_user):
+        abort(403)
+
+    data = request.get_json(silent=True) or {}
+
+    if "title" in data:
+        title = (data.get("title") or "").strip()
+        doc.title = title or "Untitled Document"
+
+    if "content" in data:
+        doc.content = data.get("content") or "{}"
+
+    db.session.commit()
+    return jsonify(doc.to_dict())
+
+
 @docs_bp.route("/documents/<int:doc_id>/share", methods=["POST"])
 @login_required
 def share_document(doc_id):
