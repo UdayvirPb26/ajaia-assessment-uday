@@ -2,11 +2,11 @@
 __pycache__/
 *.py[cod]
 
-# Virtual environment
+# Virtual environments
 venv/
 .venv/
 
-# Flask
+# Flask instance
 instance/
 
 # Environment variables
