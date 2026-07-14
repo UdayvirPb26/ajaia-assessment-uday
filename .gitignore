@@ -1,4 +1,16 @@
-venv/
+# Python
 __pycache__/
-*.pyc
-instance/*.db
+*.py[cod]
+
+# Virtual environment
+venv/
+.venv/
+
+# Flask
+instance/
+
+# Environment variables
+.env
+
+# macOS
+.DS_Store
