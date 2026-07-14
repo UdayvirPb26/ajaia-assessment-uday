@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 12px;">
+  <h2>Your Documents (Owned)</h2>
+  <div style="display:flex; gap:12px; align-items:center;">
+    <form method="POST" action="{{ url_for('documents.upload_document') }}" enctype="multipart/form-data" style="display:flex; gap:8px; align-items:center;">
+      <input type="file" name="file" accept=".txt,.md,.docx" required style="font-size:13px;">
+      <button type="submit" style="padding:8px 16px;">Upload &amp; Import</button>
+    </form>
+    <form method="POST" action="{{ url_for('documents.create_document') }}">
+      <button type="submit" style="padding:8px 16px;">+ New Document</button>
+    </form>
+  </div>
+</div>
+<p style="color:#888; font-size:13px; margin-top:4px;">
+  Supported upload types: .txt, .md, .docx (max 2MB). Uploading creates a new editable document from the file's content.
+</p>
+
+{% if documents %}
+  <table style="width:100%; border-collapse: collapse; margin-top: 16px;">
+    <thead>
+      <tr style="text-align:left; border-bottom: 2px solid #ddd;">
+        <th style="padding:8px;">Title</th>
+        <th style="padding:8px;">Last updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for doc in documents %}
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="padding:8px;">
+          <a href="{{ url_for('documents.edit_document', doc_id=doc.id) }}">{{ doc.title }}</a>
+        </td>
+        <td style="padding:8px; color:#666;">{{ doc.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p style="color:#666;">No documents yet. Create your first one above.</p>
+{% endif %}
+<h3 style="margin-top:32px;">Shared with you</h3>
+{% if shared_documents %}
+  <table style="width:100%; border-collapse: collapse; margin-top: 8px;">
+    <thead>
+      <tr style="text-align:left; border-bottom: 2px solid #ddd;">
+        <th style="padding:8px;">Title</th>
+        <th style="padding:8px;">Owner</th>
+        <th style="padding:8px;">Last updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for doc in shared_documents %}
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="padding:8px;">
+          <a href="{{ url_for('documents.edit_document', doc_id=doc.id) }}">{{ doc.title }}</a>
+        </td>
+        <td style="padding:8px; color:#666;">{{ doc.owner.username }}</td>
+        <td style="padding:8px; color:#666;">{{ doc.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p style="color:#666;">No one has shared a document with you yet.</p>
+{% endif %}
+{% endblock %}

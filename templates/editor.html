@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block content %}
+
+<a href="{{ url_for('documents.list_documents') }}" style="font-size:14px;">
+    &larr; Back to documents
+</a>
+
+<div style="display:flex; align-items:center; gap:12px; margin:12px 0;">
+    <input
+        id="doc-title"
+        type="text"
+        value="{{ document.title }}"
+        maxlength="200"
+        style="font-size:20px;font-weight:600;border:none;background:transparent;flex:1;padding:4px;"
+    >
+
+    <span id="save-status" style="color:#888;font-size:13px;">
+        Saved
+    </span>
+</div>
+
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+
+<div
+    id="quill-editor"
+    data-doc-id="{{ document.id }}"
+    style="background:white;min-height:400px;"
+></div>
+
+{% if is_owner %}
+<div style="margin-top:24px;padding:16px;background:white;border-radius:8px;">
+
+    <h4 style="margin-top:0;">Share this document</h4>
+
+    <form
+        method="POST"
+        action="{{ url_for('documents.share_document', doc_id=document.id) }}"
+        style="display:flex;gap:8px;"
+    >
+        <input
+            type="text"
+            name="username"
+            placeholder="username (e.g. bob)"
+            style="padding:6px;flex:1;"
+        >
+
+        <button type="submit" style="padding:6px 14px;">
+            Share
+        </button>
+    </form>
+
+    {% if shares %}
+    <ul style="margin-top:12px;padding-left:0;list-style:none;">
+
+        {% for grant, user in shares %}
+        <li style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #eee;">
+
+            <span>{{ user.username }}</span>
+
+            <form
+                method="POST"
+                action="{{ url_for('documents.revoke_share', doc_id=document.id, user_id=user.id) }}"
+            >
+                <button type="submit" style="font-size:12px;padding:4px 10px;">
+                    Revoke
+                </button>
+            </form>
+
+        </li>
+        {% endfor %}
+
+    </ul>
+
+    {% else %}
+
+    <p style="color:#888;font-size:13px;margin-bottom:0;">
+        Not shared with anyone yet.
+    </p>
+
+    {% endif %}
+
+</div>
+
+{% else %}
+
+<p style="color:#888;font-size:13px;margin-top:12px;">
+    Shared with you by {{ document.owner.username }} — you can edit this document.
+</p>
+
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+<script id="document-content" type="application/json">
+{{ (document.content or '{}') | tojson }}
+</script>
+
+<script>
+
+const editorEl = document.getElementById('quill-editor');
+const DOC_ID = editorEl.dataset.docId;
+
+// Pass the content safely as a string or object
+const rawContent = JSON.parse(document.getElementById('document-content').textContent);
+
+let initialContent = { ops: [] };
+
+try {
+    initialContent = typeof rawContent === 'string' ? JSON.parse(rawContent) : rawContent;
+
+    if (!initialContent || !initialContent.ops) {
+        initialContent = { ops: [] };
+    }
+
+} catch (err) {
+    console.error("Invalid document JSON:", err);
+    initialContent = { ops: [] };
+}
+
+const quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    modules: {
+        toolbar: [
+            ['bold', 'italic', 'underline'],
+            [{ header: [1, 2, 3, false] }],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['clean']
+        ]
+    }
+});
+
+quill.setContents(initialContent);
+
+const statusEl = document.getElementById('save-status');
+
+let saveTimeout = null;
+
+function scheduleSave() {
+
+    statusEl.textContent = "Saving...";
+
+    clearTimeout(saveTimeout);
+
+    saveTimeout = setTimeout(saveDoc, 800);
+}
+
+async function saveDoc() {
+
+    try {
+
+        const response = await fetch(`/api/documents/${DOC_ID}`, {
+
+            method: "PATCH",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+                title: document.getElementById("doc-title").value,
+
+                content: JSON.stringify(quill.getContents())
+
+            })
+
+        });
+
+        if (!response.ok) {
+            throw new Error("Save failed");
+        }
+
+        statusEl.textContent = "Saved";
+
+    } catch (err) {
+
+        console.error(err);
+
+        statusEl.textContent = "Save failed - retrying...";
+
+        setTimeout(saveDoc, 2000);
+
+    }
+
+}
+
+quill.on("text-change", scheduleSave);
+
+document.getElementById("doc-title")
+    .addEventListener("input", scheduleSave);
+
+</script>
+
+{% endblock %}

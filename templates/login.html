@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Log in</h2>
+<p style="color:#666; font-size: 14px;">
+  Demo accounts — <strong>alice</strong> / password123, <strong>bob</strong> / password123
+</p>
+<form method="POST" style="max-width: 320px;">
+  <div style="margin-bottom: 12px;">
+    <label>Username</label><br>
+    <input type="text" name="username" required style="width:100%; padding:8px;">
+  </div>
+  <div style="margin-bottom: 12px;">
+    <label>Password</label><br>
+    <input type="password" name="password" required style="width:100%; padding:8px;">
+  </div>
+  <button type="submit" style="padding:8px 16px;">Log in</button>
+</form>
+{% endblock %}
