@@ -1,6 +1,6 @@
 # Collab Docs
 
-A lightweight collaborative document editor 
+A lightweight collaborative document editor built for the Ajaia AI-Native Full Stack Developer assignment.
 
 ## Setup
 
@@ -21,23 +21,30 @@ App runs at http://127.0.0.1:5000
 | alice    | password123 |
 | bob      | password123 |
 
-## What's implemented so far (Task 1)
+## What's implemented
 
+**Document creation and editing**
 - Create / rename documents
 - Rich text editing (bold, italic, underline, headings, ordered/unordered lists) via Quill.js
 - Autosave (debounced ~800ms) with visible save status
-- Persistence via SQLite (document content stored as Quill Delta JSON)
-- Basic auth (Flask-Login) with seeded demo users, owner-scoped document list
+- Save and reopen — formatting is preserved exactly on reload
 
-## Not yet implemented
+**File upload**
+- Upload `.txt`, `.md`, or `.docx` files — each is converted into a new editable document
+  - `.txt` — each line becomes a paragraph
+  - `.md` — `#`/`##`/`###` headings map to editor headings; other Markdown syntax (bold, links, lists) is intentionally not parsed
+  - `.docx` — paragraph text and heading styles are preserved; inline bold/italic formatting inside the file is not
+- Unsupported file types and files over 2MB are rejected with a clear message, not a crash
+- Supported types are stated in the UI
 
-- File upload (Task 2)
-- Sharing between users (Task 3 — `_can_access`/`_can_edit` are already split out in `routes/documents.py` to make this a clean extension point)
-- Automated tests
-- Deployment
+**Sharing**
+- Document owner can share with another user by username
+- Shared users see the document under "Shared with you" on their document list and can edit it
+- Owner can revoke access at any time
+- Sharing is not transitive — only the owner can share a document, even one shared with them
+- Duplicate shares and shares to nonexistent usernames are handled with clear messages
 
-## Notes / tradeoffs
-
-- Chose a Flask + Jinja monolith over a separate frontend/backend to maximize delivery speed within the assignment's timebox.
-- Autosave instead of a manual save button, for smoother UX at the cost of no explicit "undo last save" safety net.
-- Quill Delta JSON (not raw HTML) is stored, to avoid needing to sanitize/parse HTML for persistence.
+**Persistence**
+- SQLite via SQLAlchemy (`instance/app.db`)
+- Document content stored as Quill Delta JSON, so formatting round-trips exactly on save/reload without any HTML parsing/sanitization step
+- Sharing state stored in a separate `shared_access` table, independent of
